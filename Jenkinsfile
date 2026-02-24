@@ -53,16 +53,19 @@ pipeline {
     }
 
     post {
-        always {
-            archiveArtifacts artifacts: 'tfplan', fingerprint: true
-        }
-
         success {
-            echo "Déploiement terminé avec succès."
+            slackSend(
+                channel: "#terraform",
+                color: "good",
+                message: "Apply réussi - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            )
         }
 
         failure {
-            echo "Pipeline Terraform en échec."
+            slackSend(
+                channel: "#terraform",
+                color: "danger",
+                message: "Pipeline échoué - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            )
         }
-    }
 }
