@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    //////////////////////////////////////////////////
+    // PARAMETERS
+    //////////////////////////////////////////////////
+
     parameters {
         choice(
             name: 'DEPLOY_ENV',
@@ -21,6 +25,10 @@ pipeline {
         )
     }
 
+    //////////////////////////////////////////////////
+    // ENVIRONMENT
+    //////////////////////////////////////////////////
+
     environment {
         TF_IN_AUTOMATION = "true"
         ENVIRONMENT      = "${params.DEPLOY_ENV}"
@@ -36,19 +44,47 @@ pipeline {
 
     stages {
 
+        //////////////////////////////////////////////////
+        // BANNIERE DE LANCEMENT
+        //////////////////////////////////////////////////
+
+        stage('Contexte') {
+            steps {
+                sh """
+                echo -e "\\033[1;36m============================================================\\033[0m"
+                echo -e "\\033[1;36m                 TERRAFORM PIPELINE                         \\033[0m"
+                echo -e "\\033[1;36m============================================================\\033[0m"
+                echo -e "\\033[1;34mClient        :\\033[0m ${CLIENT_NAME}"
+                echo -e "\\033[1;34mEnvironnement :\\033[0m ${ENVIRONMENT}"
+                echo -e "\\033[1;34mAction        :\\033[0m ${TF_ACTION}"
+                echo ""
+                """
+            }
+        }
+
+        //////////////////////////////////////////////////
+        // VALIDATION
+        //////////////////////////////////////////////////
+
         stage('Validation paramètres') {
             steps {
                 script {
                     if (!CLIENT_NAME?.trim()) {
-                        error("Le champ CLIENT est obligatoire.")
+                        error("CLIENT obligatoire.")
                     }
                 }
             }
         }
 
+        //////////////////////////////////////////////////
+        // INIT
+        //////////////////////////////////////////////////
+
         stage('Terraform Init') {
             steps {
                 sh """
+                echo -e "\\033[1;34m[INIT] Backend S3\\033[0m"
+
                 terraform init \
                   -input=false \
                   -migrate-state \
@@ -61,6 +97,10 @@ pipeline {
                 """
             }
         }
+
+        //////////////////////////////////////////////////
+        // PLAN
+        //////////////////////////////////////////////////
 
         stage('Terraform Plan') {
             steps {
@@ -86,6 +126,10 @@ pipeline {
             }
         }
 
+        //////////////////////////////////////////////////
+        // APPROVAL
+        //////////////////////////////////////////////////
+
         stage('Manual Approval') {
             steps {
                 script {
@@ -98,17 +142,21 @@ pipeline {
             }
         }
 
+        //////////////////////////////////////////////////
+        // EXECUTION
+        //////////////////////////////////////////////////
+
         stage('Terraform Execute') {
             steps {
                 script {
                     if (TF_ACTION == "destroy") {
                         sh """
-                        echo -e "\\033[1;31m[DESTROY]\\033[0m"
+                        echo -e "\\033[1;31m[DESTROY EN COURS]\\033[0m"
                         terraform apply -input=false tfplan
                         """
                     } else {
                         sh """
-                        echo -e "\\033[1;32m[APPLY]\\033[0m"
+                        echo -e "\\033[1;32m[APPLY EN COURS]\\033[0m"
                         terraform apply -input=false tfplan
                         """
                     }
@@ -117,12 +165,25 @@ pipeline {
         }
     }
 
+    //////////////////////////////////////////////////
+    // POST
+    //////////////////////////////////////////////////
+
     post {
         success {
-            sh 'echo -e "\\033[1;32mPIPELINE SUCCES\\033[0m"'
+            sh """
+            echo -e "\\033[1;32m============================================================\\033[0m"
+            echo -e "\\033[1;32m                 PIPELINE SUCCES                            \\033[0m"
+            echo -e "\\033[1;32m============================================================\\033[0m"
+            """
         }
+
         failure {
-            sh 'echo -e "\\033[1;31mPIPELINE ECHEC\\033[0m"'
+            sh """
+            echo -e "\\033[1;31m============================================================\\033[0m"
+            echo -e "\\033[1;31m                 PIPELINE ECHEC                             \\033[0m"
+            echo -e "\\033[1;31m============================================================\\033[0m"
+            """
         }
     }
 }
