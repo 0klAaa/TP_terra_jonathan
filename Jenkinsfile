@@ -34,8 +34,10 @@ pipeline {
 
         stage('Manual Approval') {
             steps {
-                 message: 'Valider le déploiement Terraform ?', ok: 'Appliquer'
-                echo "Validation reçue, lancement du apply"
+                input(
+                    message: 'Valider le déploiement Terraform ?',
+                    ok: 'Appliquer',
+                )
             }
         }
 
