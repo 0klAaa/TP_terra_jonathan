@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    #################################################
-    # PARAMETRES
-    #################################################
-
     parameters {
         choice(
             name: 'DEPLOY_ENV',
@@ -18,10 +14,6 @@ pipeline {
             description: 'Nom du client (texte libre)'
         )
     }
-
-    #################################################
-    # ENV VARIABLES
-    #################################################
 
     environment {
         TF_IN_AUTOMATION = "true"
