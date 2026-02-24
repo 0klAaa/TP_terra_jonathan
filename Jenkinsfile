@@ -1,8 +1,27 @@
 pipeline {
     agent any
 
+    # PARAMETRES (LISTES DÉROULANTES)
+    parameters {
+        choice(
+            name: 'DEPLOY_ENV',
+            choices: ['dev', 'val', 'prod'],
+            description: 'Choisir l’environnement de déploiement'
+        )
+
+        choice(
+            name: 'CLIENT',
+            choices: ['client1', 'client2', 'client3'],
+            description: 'Choisir le client'
+        )
+    }
+
+    
+    # ENV VARIABLES
     environment {
         TF_IN_AUTOMATION = "true"
+        ENVIRONMENT      = "${params.DEPLOY_ENV}"
+        CLIENT_NAME      = "${params.CLIENT}"
     }
 
     options {
@@ -11,9 +30,10 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Afficher paramètres') {
             steps {
-                checkout scm
+                echo "Environnement sélectionné : ${ENVIRONMENT}"
+                echo "Client sélectionné : ${CLIENT_NAME}"
             }
         }
 
@@ -31,38 +51,38 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                sh 'terraform plan -out=tfplan'
-                sh 'terraform show tfplan'
+                sh "terraform plan -out=tfplan -var='environment=${ENVIRONMENT}' -var='client=${CLIENT_NAME}'"
             }
         }
 
         stage('Manual Approval') {
             steps {
-                input(
-                    message: 'Valider le déploiement Terraform ?',
-                    ok: 'Appliquer',
-                )
+                input message: "Valider le déploiement ${ENVIRONMENT} pour ${CLIENT_NAME} ?", ok: 'Appliquer'
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -input=false tfplan'
+                sh "terraform apply -input=false tfplan"
             }
         }
     }
 
     post {
-        always {
-            archiveArtifacts artifacts: 'tfplan', fingerprint: true
-        }
-
         success {
-            echo "Déploiement terminé avec succès."
+            slackSend(
+                channel: "#terraform",
+                color: "good",
+                message: "Deploy ${ENVIRONMENT} - ${CLIENT_NAME} réussi"
+            )
         }
 
         failure {
-            echo "Pipeline Terraform en échec."
+            slackSend(
+                channel: "#terraform",
+                color: "danger",
+                message: "Deploy ${ENVIRONMENT} - ${CLIENT_NAME} échoué"
+            )
         }
     }
 }
