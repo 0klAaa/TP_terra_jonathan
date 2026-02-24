@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    //////////////////////////////////////////////////
+    // PARAMETERS
+    //////////////////////////////////////////////////
+
     parameters {
         choice(
             name: 'DEPLOY_ENV',
@@ -15,6 +19,10 @@ pipeline {
         )
     }
 
+    //////////////////////////////////////////////////
+    // ENVIRONMENT
+    //////////////////////////////////////////////////
+
     environment {
         TF_IN_AUTOMATION = "true"
         ENVIRONMENT      = "${params.DEPLOY_ENV}"
@@ -23,44 +31,87 @@ pipeline {
 
     options {
         ansiColor('xterm')
+        timestamps()
     }
 
     stages {
 
-        stage('Afficher paramètres') {
+        //////////////////////////////////////////////////
+        // CONTEXTE
+        //////////////////////////////////////////////////
+
+        stage('Contexte') {
             steps {
-                echo "Environnement : ${ENVIRONMENT}"
-                echo "Client : ${CLIENT_NAME}"
+                sh '''
+                echo -e "\\033[1;36m==================================================\\033[0m"
+                echo -e "\\033[1;36m            CONTEXTE DU DEPLOIEMENT              \\033[0m"
+                echo -e "\\033[1;36m==================================================\\033[0m"
+                echo -e "\\033[1;34mEnvironnement :\\033[0m ${ENVIRONMENT}"
+                echo -e "\\033[1;34mClient        :\\033[0m ${CLIENT_NAME}"
+                echo ""
+                '''
             }
         }
 
+        //////////////////////////////////////////////////
+        // VALIDATION PARAMETRES
+        //////////////////////////////////////////////////
+
         stage('Validation paramètres') {
-             steps {
-        script {
-            if (!CLIENT_NAME?.trim()) {
-                error("Le champ CLIENT est obligatoire.")
+            steps {
+                script {
+                    if (!CLIENT_NAME?.trim()) {
+                        error("Le champ CLIENT est obligatoire.")
                     }
                 }
             }
         }
 
+        //////////////////////////////////////////////////
+        // TERRAFORM INIT
+        //////////////////////////////////////////////////
+
         stage('Terraform Init') {
             steps {
-                sh 'terraform init -input=false'
+                sh '''
+                echo -e "\\033[1;34m[INIT] Initialisation Terraform\\033[0m"
+                terraform init -input=false
+                '''
             }
         }
+
+        //////////////////////////////////////////////////
+        // TERRAFORM VALIDATE
+        //////////////////////////////////////////////////
 
         stage('Terraform Validate') {
             steps {
-                sh 'terraform validate'
+                sh '''
+                echo -e "\\033[1;34m[VALIDATE] Validation configuration\\033[0m"
+                terraform validate
+                '''
             }
         }
 
+        //////////////////////////////////////////////////
+        // TERRAFORM PLAN
+        //////////////////////////////////////////////////
+
         stage('Terraform Plan') {
             steps {
-                sh "terraform plan -out=tfplan -var='environment=${ENVIRONMENT}' -var='client=${CLIENT_NAME}'"
+                sh '''
+                echo -e "\\033[1;33m[PLAN] Génération du plan\\033[0m"
+                terraform plan \
+                  -out=tfplan \
+                  -var="environment=${ENVIRONMENT}" \
+                  -var="client=${CLIENT_NAME}"
+                '''
             }
         }
+
+        //////////////////////////////////////////////////
+        // APPROBATION
+        //////////////////////////////////////////////////
 
         stage('Manual Approval') {
             steps {
@@ -68,10 +119,32 @@ pipeline {
             }
         }
 
+        //////////////////////////////////////////////////
+        // TERRAFORM APPLY
+        //////////////////////////////////////////////////
+
         stage('Terraform Apply') {
             steps {
-                sh "terraform apply -input=false tfplan"
+                sh '''
+                echo -e "\\033[1;32m[APPLY] Déploiement en cours\\033[0m"
+                terraform apply -input=false tfplan
+                echo -e "\\033[1;32m[APPLY] Déploiement terminé\\033[0m"
+                '''
             }
+        }
+    }
+
+    //////////////////////////////////////////////////
+    // POST
+    //////////////////////////////////////////////////
+
+    post {
+        success {
+            sh 'echo -e "\\033[1;32mDEPLOIEMENT REUSSI\\033[0m"'
+        }
+
+        failure {
+            sh 'echo -e "\\033[1;31mDEPLOIEMENT ECHOUE\\033[0m"'
         }
     }
 }
