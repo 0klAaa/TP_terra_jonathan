@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        TF_VERSION = "1.6.6"
         TF_IN_AUTOMATION = "true"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -15,34 +15,32 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                sh '''
-                    terraform --version
-                    terraform init -input=false
-                '''
+                sh 'terraform init -input=false'
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh '''
-                    terraform validate
-                '''
+                sh 'terraform validate'
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh '''
-                    terraform plan -out=tfplan
-                '''
+                sh 'terraform plan -out=tfplan'
+                sh 'terraform show tfplan'
             }
         }
 
-        stage('Show Plan') {
+        stage('Manual Approval') {
             steps {
-                sh '''
-                    terraform show tfplan
-                '''
+                input message: 'Valider le déploiement Terraform ?', ok: 'Appliquer'
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                sh 'terraform apply -input=false tfplan'
             }
         }
     }
@@ -53,11 +51,11 @@ pipeline {
         }
 
         success {
-            echo "Terraform plan completed successfully."
+            echo "Déploiement terminé avec succès."
         }
 
         failure {
-            echo "Terraform pipeline failed."
+            echo "Pipeline Terraform en échec."
         }
     }
 }
