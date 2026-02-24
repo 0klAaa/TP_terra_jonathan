@@ -5,6 +5,10 @@ pipeline {
         TF_IN_AUTOMATION = "true"
     }
 
+    options {
+        ansiColor('xterm')
+    }
+
     stages {
 
         stage('Checkout') {
