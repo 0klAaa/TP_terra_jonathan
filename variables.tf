@@ -34,3 +34,13 @@ variable "vpc_cidr" {
     error_message = "vpc_cidr must be provided when create_vpc is true."
   }
 }
+
+variable "environment" {
+  type        = string
+  description = "Environment name (dev, val, prod)"
+}
+
+variable "client" {
+  type        = string
+  description = "Client name"
+}
