@@ -1,7 +1,6 @@
 pipeline {
     agent any
 
-    # PARAMETRES (LISTES DÉROULANTES)
     parameters {
         choice(
             name: 'DEPLOY_ENV',
@@ -17,9 +16,7 @@ pipeline {
     }
 
     
-    # ENV VARIABLES
     environment {
-        TF_IN_AUTOMATION = "true"
         ENVIRONMENT      = "${params.DEPLOY_ENV}"
         CLIENT_NAME      = "${params.CLIENT}"
     }
