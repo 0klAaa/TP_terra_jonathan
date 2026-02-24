@@ -71,12 +71,18 @@ pipeline {
         // TERRAFORM INIT
         //////////////////////////////////////////////////
 
-        stage('Terraform Init') {
+       stage('Terraform Init') {
             steps {
-                sh '''
-                echo -e "\\033[1;34m[INIT] Initialisation Terraform\\033[0m"
-                terraform init -input=false
-                '''
+                sh """
+                echo -e "\\033[1;34m[INIT] Initialisation backend distant\\033[0m"
+
+                terraform init -input=false \
+                -backend-config="bucket=okla-terraform-state-bucket" \
+                -backend-config="key=${CLIENT_NAME}/${ENVIRONMENT}/terraform.tfstate" \
+                -backend-config="region=eu-west-3" \
+                -backend-config="dynamodb_table=terraform-lock-table" \
+                -backend-config="encrypt=true"
+                """
             }
         }
 
