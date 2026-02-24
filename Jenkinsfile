@@ -68,4 +68,5 @@ pipeline {
                 message: "Pipeline échoué - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             )
         }
+    }
 }
