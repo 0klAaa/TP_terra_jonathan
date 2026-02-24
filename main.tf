@@ -58,14 +58,3 @@ module "compute" {
   web_sg_id           = module.security.web_sg_id
   target_group_arn    = module.alb.target_group_arn
 }
-
-
-# OUTPUTS ROOT
-
-output "alb_dns_name" {
-  value = module.alb.alb_dns_name
-}
-
-output "private_instance_ids" {
-  value = module.compute.instance_ids
-}
