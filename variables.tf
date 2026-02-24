@@ -37,10 +37,8 @@ variable "vpc_cidr" {
 
 variable "environment" {
   type        = string
-  description = "Environment name (dev, val, prod)"
 }
 
 variable "client" {
   type        = string
-  description = "Client name"
 }

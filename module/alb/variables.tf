@@ -9,3 +9,10 @@ variable "public_subnet_ids" {
 variable "alb_sg_id" {
   type = string
 }
+variable "client" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}

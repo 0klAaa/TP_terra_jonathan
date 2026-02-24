@@ -22,3 +22,11 @@ variable "private_subnets" {
   }))
   default = []
 }
+
+variable "client" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}

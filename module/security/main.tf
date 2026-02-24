@@ -2,6 +2,12 @@ resource "aws_security_group" "alb" {
   name   = "alb-sg"
   vpc_id = var.vpc_id
 
+  tags = {
+    Name = "${var.client}-${var.environment}-web-sg"
+      Client      = var.client
+    Environment = var.environment
+  }
+
   ingress {
     from_port   = 80
     to_port     = 80
