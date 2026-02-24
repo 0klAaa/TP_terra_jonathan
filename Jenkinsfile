@@ -74,9 +74,10 @@ pipeline {
        stage('Terraform Init') {
             steps {
                 sh """
-                echo -e "\\033[1;34m[INIT] Initialisation backend distant\\033[0m"
+                echo -e "\\033[1;34m[INIT] Backend S3 distant\\033[0m"
 
-                terraform init -input=false \
+                terraform init \
+                -migrate-state \
                 -backend-config="bucket=okla-terraform-state-bucket" \
                 -backend-config="key=${CLIENT_NAME}/${ENVIRONMENT}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
