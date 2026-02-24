@@ -79,7 +79,7 @@ pipeline {
                 terraform init -input=false \
                 -backend-config="bucket=okla-terraform-state-bucket" \
                 -backend-config="key=${CLIENT_NAME}/${ENVIRONMENT}/terraform.tfstate" \
-                -backend-config="region=eu-west-3" \
+                -backend-config="region=us-east-1" \
                 -backend-config="dynamodb_table=terraform-lock-table" \
                 -backend-config="encrypt=true"
                 """
