@@ -1,22 +1,30 @@
 pipeline {
     agent any
 
+    #################################################
+    # PARAMETRES
+    #################################################
+
     parameters {
         choice(
             name: 'DEPLOY_ENV',
             choices: ['dev', 'val', 'prod'],
-            description: 'Choisir l’environnement de déploiement'
+            description: 'Choisir l’environnement'
         )
 
-        choice(
+        string(
             name: 'CLIENT',
-            choices: ['client1', 'client2', 'client3'],
-            description: 'Choisir le client'
+            defaultValue: '',
+            description: 'Nom du client (texte libre)'
         )
     }
 
-    
+    #################################################
+    # ENV VARIABLES
+    #################################################
+
     environment {
+        TF_IN_AUTOMATION = "true"
         ENVIRONMENT      = "${params.DEPLOY_ENV}"
         CLIENT_NAME      = "${params.CLIENT}"
     }
@@ -29,8 +37,18 @@ pipeline {
 
         stage('Afficher paramètres') {
             steps {
-                echo "Environnement sélectionné : ${ENVIRONMENT}"
-                echo "Client sélectionné : ${CLIENT_NAME}"
+                echo "Environnement : ${ENVIRONMENT}"
+                echo "Client : ${CLIENT_NAME}"
+            }
+        }
+
+        stage('Validation paramètres') {
+             steps {
+        script {
+            if (!CLIENT_NAME?.trim()) {
+                error("Le champ CLIENT est obligatoire.")
+                    }
+                }
             }
         }
 
@@ -62,24 +80,6 @@ pipeline {
             steps {
                 sh "terraform apply -input=false tfplan"
             }
-        }
-    }
-
-    post {
-        success {
-            slackSend(
-                channel: "#terraform",
-                color: "good",
-                message: "Deploy ${ENVIRONMENT} - ${CLIENT_NAME} réussi"
-            )
-        }
-
-        failure {
-            slackSend(
-                channel: "#terraform",
-                color: "danger",
-                message: "Deploy ${ENVIRONMENT} - ${CLIENT_NAME} échoué"
-            )
         }
     }
 }
